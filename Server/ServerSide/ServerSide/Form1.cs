@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -15,6 +16,8 @@ namespace ServerSide
 {
     public partial class Form1 : Form
     {
+        
+
         public Form1()
         {
             InitializeComponent();
@@ -25,12 +28,10 @@ namespace ServerSide
 
         private void Form1_Load_1(object sender, EventArgs e)       //Gameloop
         {
-            string[] ips = "112".Split(',');
-            label1.Text = "Empty";
+            Thread listningFrom = new Thread(() => read());
+            listningFrom.Start();
 
-            users.Add("192.168.0." + ips[0]);
-            Console.WriteLine(users[0]);
-            Thread n = new Thread(() => read(0, Convert.ToInt32(ips[0])));   //creates thread for individual to read data from
+            Thread n = new Thread(mymove);
             n.Start();
 
             Thread comparision = new Thread(compare);
@@ -40,49 +41,45 @@ namespace ServerSide
             w.Start();
         }
 
-        List<string> users = new List<string>();
+
+        public string ip = ("192.168.0.112");
         int opdecision = -1;
         int mydecision = -1;
-        bool myturn = true;
-        bool opturn = true;
-        public int globalport = 11000;
+
 
         private void b_rock_Click(object sender, EventArgs e)
         {
-            if (myturn)
+            if (mydecision == -1)
             {
                 mydecision = 0;
-                Thread n = new Thread(mymove);
-                n.Start();
-                myturn = false;
             }
         }
 
         private void b_paper_Click(object sender, EventArgs e)
         {
-            if (myturn)
+            if (mydecision == -1)
             {
                 mydecision = 1;
-                Thread n = new Thread(mymove);
-                n.Start();
-                myturn = false;
             }
         }
 
         private void b_scissor_Click(object sender, EventArgs e)
         {
-            if (myturn)
+            if (mydecision == -1)
             {
                 mydecision = 2;
-                Thread n = new Thread(mymove);
-                n.Start();
-                myturn = false;
             }
         }
 
         public void mymove()
         {
-            myupdate();
+            while (true)
+            {
+                if(mydecision != -1)
+                {
+                    myupdate();
+                }
+            }
         }
 
         private void myupdate()
@@ -108,25 +105,23 @@ namespace ServerSide
             }
         }
 
-        public void read(int id, int ipp)
+        public void read()
         {
-            using (UdpClient listener = new UdpClient(ipp * 10))
-            {
-                Console.WriteLine(ipp * 10);
-                while (true)                    // ERROR here because as soon as a new value is mydecisioncount is increased it runs auto matically
-                {
-                    if(opturn)
-                    {
-                        IPEndPoint listenEndPoint = new IPEndPoint(IPAddress.Parse(users[id]), ipp * 10);
-                        opdecision = Convert.ToInt32(Encoding.ASCII.GetString(listener.Receive(ref listenEndPoint)));     //listinng to moves: Rock, Paper, Scissors from client.
+            IPEndPoint listenEndPoint = new IPEndPoint(IPAddress.Parse(ip), 8000);
+            TcpListener listner = new TcpListener(listenEndPoint);
+            listner.Start();
+            TcpClient cl = listner.AcceptTcpClient();
+            StreamReader sr = new StreamReader(cl.GetStream());
+            StreamWriter wr = new StreamWriter(cl.GetStream());
 
-                        if(opturn && (opdecision == 0 || opdecision == 1 || opdecision == 2))
-                        {
-                            Console.WriteLine("Opp Decision: " + Convert.ToString(opdecision));
-                            opturn = false;
-                            move();
-                        }
-                    }
+            while (true)                    // ERROR here because as soon as a new value is mydecisioncount is increased it runs auto matically
+            {
+                if(opdecision == -1)
+                {
+                    opdecision = Convert.ToInt32(sr.ReadLine());
+                    Console.WriteLine(opdecision + " THis is opponent selection");
+                    if(opdecision != -1)
+                        move();
                 }
             }
         }
@@ -190,10 +185,6 @@ namespace ServerSide
                 {
                     label3.Text = "Waiting for Opponent's Turn";
                 }
-                else if (mydecision == -1 && opdecision != -1)
-                {
-                    label3.Text = "Please Choose";
-                }
             }
         }
 
@@ -208,8 +199,6 @@ namespace ServerSide
                     compareUpdate();
                     mydecision = -1;
                     opdecision = -1;
-                    myturn = true;
-                    opturn = true;
                 }
             }
         }
@@ -225,39 +214,39 @@ namespace ServerSide
             {
                 if (label1.Text == "Paper" && label2.Text == "Rock")
                 {
-                    label3.Text = "Opponent Win!";
+                    label3.Text = "Opponent Win! \nPlease Choose";
                 }
                 else if (label1.Text == "Scissor" && label2.Text == "Paper")
                 {
-                    label3.Text = "Opponent Win!";
+                    label3.Text = "Opponent Win! \nPlease Choose";
                 }
                 else if (label1.Text == "Rock" && label2.Text == "Scissor")
                 {
-                    label3.Text = "Opponent Win!";
+                    label3.Text = "Opponent Win! \nPlease Choose";
                 }
                 else if (label2.Text == "Paper" && label1.Text == "Rock")
                 {
-                    label3.Text = "You Win!";
+                    label3.Text = "You Win! \nPlease Choose";
                 }
                 else if (label2.Text == "Scissor" && label1.Text == "Paper")
                 {
-                    label3.Text = "You Win!";
+                    label3.Text = "You Win! \nPlease Choose";
                 }
                 else if (label2.Text == "Rock" && label1.Text == "Scissor")
                 {
-                    label3.Text = "You Win!";
+                    label3.Text = "You Win! \nPlease Choose";
                 }
                 else if (label2.Text == "Rock" && label1.Text == "Rock")
                 {
-                    label3.Text = "Its a Draw!";
+                    label3.Text = "Its a Draw! \nPlease Choose";
                 }
                 else if (label2.Text == "Scissor" && label1.Text == "Scissor")
                 {
-                    label3.Text = "Its a Draw!";
+                    label3.Text = "Its a Draw! \nPlease Choose";
                 }
                 else if (label2.Text == "Paper" && label1.Text == "Paper")
                 {
-                    label3.Text = "Its a Draw!";
+                    label3.Text = "Its a Draw! \nPlease Choose";
                 }
             }
         }
