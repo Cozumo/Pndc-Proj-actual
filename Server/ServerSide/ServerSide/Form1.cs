@@ -24,15 +24,14 @@ namespace ServerSide
             b_rock.Text = "\U000026F0";
             b_paper.Text = "\U0001F4C3";
             b_scissor.Text = "\U00002702";
+            opscore_label.Text = opscore.ToString();
+            myscore_label.Text = myscore.ToString();
         }
 
         private void Form1_Load_1(object sender, EventArgs e)       //Gameloop
         {
-            Thread listningFrom = new Thread(() => read());
+            Thread listningFrom = new Thread(read);
             listningFrom.Start();
-
-            Thread n = new Thread(mymove);
-            n.Start();
 
             Thread comparision = new Thread(compare);
             comparision.Start();
@@ -41,10 +40,14 @@ namespace ServerSide
             w.Start();
         }
 
-
+        bool myturn = true;
+        TcpListener listner = null;
+        TcpClient cl = null;
         public string ip = ("192.168.0.112");
         int opdecision = -1;
         int mydecision = -1;
+        int myscore = 0;
+        int opscore = 0;
 
 
         private void b_rock_Click(object sender, EventArgs e)
@@ -71,14 +74,22 @@ namespace ServerSide
             }
         }
 
+        private void b_confirm_Click(object sender, EventArgs e)
+        {
+            Thread n = new Thread(mymove);
+            n.Start();
+        }
+
         public void mymove()
         {
-            while (true)
+            if(mydecision != -1 && myturn == true)
             {
-                if(mydecision != -1)
-                {
-                    myupdate();
-                }
+                myupdate();
+                myturn = false;
+
+                StreamWriter wr = new StreamWriter(cl.GetStream());
+                wr.WriteLine(mydecision);
+                wr.Flush();
             }
         }
 
@@ -108,9 +119,9 @@ namespace ServerSide
         public void read()
         {
             IPEndPoint listenEndPoint = new IPEndPoint(IPAddress.Parse(ip), 8000);
-            TcpListener listner = new TcpListener(listenEndPoint);
+            listner = new TcpListener(listenEndPoint);
             listner.Start();
-            TcpClient cl = listner.AcceptTcpClient();
+            cl = listner.AcceptTcpClient();
             StreamReader sr = new StreamReader(cl.GetStream());
             StreamWriter wr = new StreamWriter(cl.GetStream());
 
@@ -120,45 +131,6 @@ namespace ServerSide
                 {
                     opdecision = Convert.ToInt32(sr.ReadLine());
                     Console.WriteLine(opdecision + " THis is opponent selection");
-                    if(opdecision != -1)
-                        move();
-                }
-            }
-        }
-
-        public void send(int id)
-        {
-            // write send code here for updating screen on user screens with broadcast
-
-        }
-
-        //===================================Opponents Move===========================
-
-        public void move()
-        {
-            update();
-        }
-
-        public void update()
-        {
-            if (this.InvokeRequired == true)
-            {
-                this.Invoke(new MethodInvoker(update));
-
-            }
-            else
-            {
-                if (opdecision == 0)
-                {
-                    label1.Text = "Rock";
-                }
-                else if (opdecision == 1)
-                {
-                    label1.Text = "Paper";
-                }
-                else if (opdecision == 2)
-                {
-                    label1.Text = "Scissor";
                 }
             }
         }
@@ -183,7 +155,7 @@ namespace ServerSide
             {
                 if (mydecision != -1 && opdecision == -1)
                 {
-                    label3.Text = "Waiting for Opponent's Turn";
+                    label3.Text = "Confirm Choice & \n Wait for Opponent's Turn";
                 }
             }
         }
@@ -194,11 +166,12 @@ namespace ServerSide
         {
             while (true)
             {
-                if(mydecision != -1 && opdecision != -1)
+                if(mydecision != -1 && opdecision != -1 && myturn == false)
                 {
                     compareUpdate();
                     mydecision = -1;
                     opdecision = -1;
+                    myturn = true;
                 }
             }
         }
@@ -212,29 +185,49 @@ namespace ServerSide
             }
             else
             {
+
+                if (opdecision == 0)
+                {
+                    label1.Text = "Rock";
+                }
+                else if (opdecision == 1)
+                {
+                    label1.Text = "Paper";
+                }
+                else if (opdecision == 2)
+                {
+                    label1.Text = "Scissor";
+                }
+
                 if (label1.Text == "Paper" && label2.Text == "Rock")
                 {
                     label3.Text = "Opponent Win! \nPlease Choose";
+                    opscore++;
                 }
                 else if (label1.Text == "Scissor" && label2.Text == "Paper")
                 {
                     label3.Text = "Opponent Win! \nPlease Choose";
+                    opscore++;
                 }
                 else if (label1.Text == "Rock" && label2.Text == "Scissor")
                 {
                     label3.Text = "Opponent Win! \nPlease Choose";
+                    opscore++;
                 }
                 else if (label2.Text == "Paper" && label1.Text == "Rock")
                 {
                     label3.Text = "You Win! \nPlease Choose";
+                    myscore++;
                 }
                 else if (label2.Text == "Scissor" && label1.Text == "Paper")
                 {
                     label3.Text = "You Win! \nPlease Choose";
+                    myscore++;
                 }
                 else if (label2.Text == "Rock" && label1.Text == "Scissor")
                 {
                     label3.Text = "You Win! \nPlease Choose";
+                    myscore++;
                 }
                 else if (label2.Text == "Rock" && label1.Text == "Rock")
                 {
@@ -248,7 +241,14 @@ namespace ServerSide
                 {
                     label3.Text = "Its a Draw! \nPlease Choose";
                 }
+                opscore_label.Text = opscore.ToString();
+                myscore_label.Text = myscore.ToString();
             }
+        }
+
+        private void label9_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
