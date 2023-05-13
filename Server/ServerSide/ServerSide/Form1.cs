@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +17,16 @@ namespace ServerSide
 {
     public partial class Form1 : Form
     {
-        
+        [DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
+
+        private static extern IntPtr CreateRoundRectRgn(
+                int nLeft,
+                int nTop,
+                int nRight,
+                int nBottom,
+                int nWidthEllipse,
+                int nHeightEllipse
+            );
 
         public Form1()
         {
@@ -26,18 +36,30 @@ namespace ServerSide
             b_scissor.Text = "\U00002702";
             opscore_label.Text = opscore.ToString();
             myscore_label.Text = myscore.ToString();
+            b_rock.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_rock.Width, b_rock.Height, 30, 30));
+            b_paper.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_paper.Width, b_paper.Height, 30, 30));
+            b_scissor.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_scissor.Width, b_rock.Height, 30, 30));
+            b_confirm.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_confirm.Width, b_confirm.Height, 30, 30));
+            pictureBox1.SendToBack();
         }
 
         private void Form1_Load_1(object sender, EventArgs e)       //Gameloop
         {
-            Thread listningFrom = new Thread(read);
-            listningFrom.Start();
+            try
+            {
+                Thread listningFrom = new Thread(read);
+                listningFrom.Start();
 
-            Thread comparision = new Thread(compare);
-            comparision.Start();
+                Thread comparision = new Thread(compare);
+                comparision.Start();
 
-            Thread w = new Thread(wait);
-            w.Start();
+                Thread w = new Thread(wait);
+                w.Start();
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Reading From Opponent Stopped!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         bool myturn = true;
@@ -127,7 +149,7 @@ namespace ServerSide
 
             while (true)                    // ERROR here because as soon as a new value is mydecisioncount is increased it runs auto matically
             {
-                if(opdecision == -1)
+                if (opdecision == -1)
                 {
                     opdecision = Convert.ToInt32(sr.ReadLine());
                     Console.WriteLine(opdecision + " THis is opponent selection");
@@ -157,6 +179,10 @@ namespace ServerSide
                 {
                     label3.Text = "Confirm Choice & \n Wait for Opponent's Turn";
                 }
+                else if(mydecision == -1 && opdecision != -1)
+                {
+                    label3.Text = "Oppenent has chosen, \n Waiting on you";
+                }
             }
         }
 
@@ -181,11 +207,9 @@ namespace ServerSide
             if (this.InvokeRequired == true)
             {
                 this.Invoke(new MethodInvoker(compareUpdate));
-
             }
             else
             {
-
                 if (opdecision == 0)
                 {
                     label1.Text = "Rock";

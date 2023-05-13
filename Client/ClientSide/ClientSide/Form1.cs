@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,16 @@ namespace ClientSide
 {
     public partial class Form1 : Form
     {
+        [DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
+
+        private static extern IntPtr CreateRoundRectRgn(
+                int nLeft,
+                int nTop,
+                int nRight,
+                int nBottom,
+                int nWidthEllipse,
+                int nHeightEllipse
+            );
 
         public Form1()
         {
@@ -24,6 +35,11 @@ namespace ClientSide
             b_scissor.Text = "\U00002702";
             opscore_label.Text = opscore.ToString();
             myscore_label.Text = myscore.ToString();
+            b_rock.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_rock.Width, b_rock.Height, 30, 30));
+            b_paper.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_paper.Width, b_paper.Height, 30, 30));
+            b_scissor.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_scissor.Width, b_rock.Height, 30, 30));
+            b_confirm.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, b_confirm.Width, b_confirm.Height, 30, 30));
+            pictureBox1.SendToBack();
         }
 
         int choice = -1;
@@ -83,7 +99,6 @@ namespace ClientSide
             n.Start();
         }
 
-
         public void read()
         {
             StreamReader sr = new StreamReader(cl.GetStream());
@@ -119,6 +134,10 @@ namespace ClientSide
                 if (choice != -1 && opdecision == -1)
                 {
                     label3.Text = "Confirm Choice & \n Wait for Opponent's Turn";
+                }
+                else if (choice == -1 && opdecision != -1)
+                {
+                    label3.Text = "Oppenent has chosen, \n Waiting on you";
                 }
             }
         }
