@@ -74,25 +74,28 @@ namespace ServerSide
 
         private void b_rock_Click(object sender, EventArgs e)
         {
-            if (mydecision == -1)
+            if (myturn)
             {
                 mydecision = 0;
+                label2.Text = "Rock";
             }
         }
 
         private void b_paper_Click(object sender, EventArgs e)
         {
-            if (mydecision == -1)
+            if (myturn)
             {
                 mydecision = 1;
+                label2.Text = "Paper";
             }
         }
 
         private void b_scissor_Click(object sender, EventArgs e)
         {
-            if (mydecision == -1)
+            if (myturn)
             {
                 mydecision = 2;
+                label2.Text = "Scissors";
             }
         }
 

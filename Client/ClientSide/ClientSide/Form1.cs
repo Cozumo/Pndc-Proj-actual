@@ -77,20 +77,29 @@ namespace ClientSide
 
         private void b_rock_Click(object sender, EventArgs e)
         {
-            choice = 0;
-            label2.Text = "Rock";
+            if (myturn)
+            {
+                choice = 0;
+                label2.Text = "Rock";
+            }
         }
 
         private void b_paper_Click(object sender, EventArgs e)
         {
-            choice = 1;
-            label2.Text = "Paper";
+            if (myturn)
+            {
+                choice = 1;
+                label2.Text = "Paper";
+            }
         }
 
         private void b_scissor_Click(object sender, EventArgs e)
         {
-            choice = 2;
-            label2.Text = "Scissor";
+            if (myturn)
+            {
+                choice = 2;
+                label2.Text = "Scissor";
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
